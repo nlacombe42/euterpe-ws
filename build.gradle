@@ -1,0 +1,26 @@
+apply plugin: 'java'
+
+defaultTasks 'tasks'
+
+group = 'net.nlacombe'
+version = '0.0.1'
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+dependencies {
+	compile 'com.github.felixgail:gplaymusic:0.3.6'
+	compile 'org.apache.commons:commons-csv:1.6'
+	compile 'org.slf4j:slf4j-api:1.7.25'
+
+	runtime 'ch.qos.logback:logback-classic:1.2.3'
+}
+
+repositories {
+	mavenCentral()
+	mavenLocal()
+}
+
+wrapper {
+	gradleVersion = '5.1.1'
+}
