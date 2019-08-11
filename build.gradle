@@ -5,12 +5,17 @@ defaultTasks 'tasks'
 group = 'net.nlacombe'
 version = '0.0.1'
 
-sourceCompatibility = 11
-targetCompatibility = 11
+sourceCompatibility = 12
+targetCompatibility = 12
 
 dependencies {
+	compile 'net.nlacombe:common-lib:8.1.0'
+
 	compile 'com.github.felixgail:gplaymusic:0.3.6'
+	compile 'se.michaelthelin.spotify:spotify-web-api-java:2.2.0'
+	compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
 	compile 'org.apache.commons:commons-csv:1.6'
+	compile 'org.apache.commons:commons-lang3:3.9'
 	compile 'org.slf4j:slf4j-api:1.7.25'
 
 	runtime 'ch.qos.logback:logback-classic:1.2.3'

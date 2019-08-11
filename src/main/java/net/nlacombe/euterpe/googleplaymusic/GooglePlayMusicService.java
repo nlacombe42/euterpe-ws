@@ -1,8 +1,7 @@
-package net.nlacombe.euterpe.main;
+package net.nlacombe.euterpe.googleplaymusic;
 
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.api.PlaylistApi;
-import com.github.felixgail.gplaymusic.api.TrackApi;
 import com.github.felixgail.gplaymusic.model.Playlist;
 import com.github.felixgail.gplaymusic.model.PlaylistEntry;
 import com.github.felixgail.gplaymusic.model.Track;
@@ -26,7 +25,6 @@ public class GooglePlayMusicService {
 
     private GPlayMusic googlePlayMusicApi;
     private PlaylistApi playlistApi;
-    private TrackApi trackApi;
     private List<Track> allLibraryTracks;
 
     public GooglePlayMusicService() {
@@ -36,7 +34,6 @@ public class GooglePlayMusicService {
                 .build();
 
         playlistApi = googlePlayMusicApi.getPlaylistApi();
-        trackApi = googlePlayMusicApi.getTrackApi();
     }
 
     public void exportPlayListsToCsv(Path csvFilePath) {
