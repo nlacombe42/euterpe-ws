@@ -6,7 +6,7 @@
         </encoder>
     </appender>
 
-    <logger name="net.nlacombe.euterpe">
+    <logger name="net.nlacombe.euterpews">
         <level value="debug"/>
     </logger>
 

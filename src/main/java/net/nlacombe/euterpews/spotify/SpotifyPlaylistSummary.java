@@ -1,4 +1,4 @@
-package net.nlacombe.euterpe.spotify;
+package net.nlacombe.euterpews.spotify;
 
 public interface SpotifyPlaylistSummary {
 

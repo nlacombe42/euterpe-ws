@@ -1,6 +1,21 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		classpath 'se.transmode.gradle:gradle-docker:1.2'
+	}
+}
+
 plugins {
 	id 'java'
+	id 'idea'
+	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+	id 'org.springframework.boot' version '2.3.4.RELEASE'
 }
+
+apply plugin: 'docker'
 
 defaultTasks 'tasks'
 
@@ -10,15 +25,25 @@ version = '1.0.0'
 sourceCompatibility = 11
 targetCompatibility = 11
 
+project.ext.gcloudBuildDir = file('build/gcloud-build/')
+project.ext.gcloudProjectId = 'nlacombe-net-prod'
+
+String gcloudDockerImageUrl
+
 dependencies {
+	compileOnly 'org.springframework.boot:spring-boot-devtools'
+
 	implementation 'net.nlacombe:common-lib:10.4.0'
+
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'javax.inject:javax.inject:1'
 
 	implementation 'com.github.felixgail:gplaymusic:0.3.6'
 	implementation 'se.michaelthelin.spotify:spotify-web-api-java:2.2.0'
-	implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
 	implementation 'org.apache.commons:commons-csv:1.6'
-	implementation 'org.apache.commons:commons-lang3:3.9'
-	implementation 'org.slf4j:slf4j-api:1.7.25'
+	implementation 'org.apache.commons:commons-lang3:3.10'
+	implementation 'org.slf4j:slf4j-api:1.7.30'
 
 	runtime 'ch.qos.logback:logback-classic:1.2.3'
 }
@@ -30,4 +55,49 @@ repositories {
 
 wrapper {
 	gradleVersion = '6.6.1'
+}
+
+idea {
+	module {
+		downloadJavadoc = true
+		downloadSources = false
+	}
+}
+
+task buildDocker(type: Docker, dependsOn: assemble) {
+	tag = "${project.name}"
+	dockerfile = file('src/main/docker/Dockerfile')
+	doFirst {
+		copy {
+			from jar
+			from file('src/main/docker/')
+			into stageDir
+		}
+	}
+}
+
+task buildGcloudDockerImage(type: Exec, dependsOn: [assemble, check]) {
+	def buildStartTime = new Date()
+	gcloudDockerImageUrl = getGcloudDockerImageUrl(buildStartTime)
+
+	workingDir project.gcloudBuildDir
+	commandLine 'gcloud', 'builds', 'submit', '--tag', gcloudDockerImageUrl
+
+	doFirst {
+		copy {
+			from jar
+			from file('src/main/docker/')
+			into project.gcloudBuildDir
+		}
+	}
+}
+
+def getGcloudDockerImageUrl(date) {
+	def version = project.version + '-' + getDateTimestamp(date)
+
+	return "gcr.io/${project.gcloudProjectId}/${project.name}:${version}"
+}
+
+def static getDateTimestamp(date) {
+	return date.format('yyyyMMddHHmmss')
 }

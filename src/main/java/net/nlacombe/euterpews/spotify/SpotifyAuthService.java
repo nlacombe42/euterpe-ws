@@ -1,4 +1,4 @@
-package net.nlacombe.euterpe.spotify;
+package net.nlacombe.euterpews.spotify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wrapper.spotify.SpotifyApi;

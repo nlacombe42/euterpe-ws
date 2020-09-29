@@ -1,4 +1,4 @@
-package net.nlacombe.euterpe.spotify;
+package net.nlacombe.euterpews.spotify;
 
 import com.wrapper.spotify.model_objects.credentials.AuthorizationCodeCredentials;
 

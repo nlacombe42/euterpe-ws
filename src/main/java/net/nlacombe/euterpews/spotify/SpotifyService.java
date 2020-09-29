@@ -1,4 +1,4 @@
-package net.nlacombe.euterpe.spotify;
+package net.nlacombe.euterpews.spotify;
 
 import com.wrapper.spotify.SpotifyApi;
 import com.wrapper.spotify.exceptions.SpotifyWebApiException;

@@ -1,4 +1,4 @@
-package net.nlacombe.euterpe.googleplaymusic;
+package net.nlacombe.euterpews.googleplaymusic;
 
 import com.github.felixgail.gplaymusic.api.GPlayMusic;
 import com.github.felixgail.gplaymusic.api.PlaylistApi;
