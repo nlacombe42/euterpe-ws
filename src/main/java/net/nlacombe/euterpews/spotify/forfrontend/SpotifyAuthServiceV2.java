@@ -20,20 +20,23 @@ public class SpotifyAuthServiceV2 {
 
     private final String spotifyAuthClientId;
     private final String spotifyAuthClientSecret;
+    private final String spotifyAuthRedirectUri;
 
     public SpotifyAuthServiceV2(
         @Value("${spotify.auth.clientId}") String spotifyAuthClientId,
-        @Value("${spotify.auth.clientSecret}") String spotifyAuthClientSecret
+        @Value("${spotify.auth.clientSecret}") String spotifyAuthClientSecret,
+        @Value("${spotify.auth.redirectUri}") String spotifyAuthRedirectUri
     ) {
         this.jsonConverter = new ObjectMapper();
         this.spotifyAuthClientId = spotifyAuthClientId;
         this.spotifyAuthClientSecret = spotifyAuthClientSecret;
+        this.spotifyAuthRedirectUri = spotifyAuthRedirectUri;
     }
 
     public SpotifyAuthTokenV2 getSpotifyAuthToken(String code) {
         try {
             var requestBody = "code=" + code;
-            requestBody += "&redirect_uri=" + getSpotifyAuthRedirectUri();
+            requestBody += "&redirect_uri=" + spotifyAuthRedirectUri;
             requestBody += "&grant_type=authorization_code";
 
             var httpRequest = HttpRequest.newBuilder()
@@ -57,10 +60,6 @@ public class SpotifyAuthServiceV2 {
     }
 
     public SpotifyOauthFrontendConfig getSpotifyOauthFrontendConfig() {
-        return new SpotifyOauthFrontendConfig(spotifyAuthClientId, getSpotifyAuthRedirectUri());
-    }
-
-    private String getSpotifyAuthRedirectUri() {
-        return "http://localhost:8008/api/v1/spotifyOauthRedirectUri";
+        return new SpotifyOauthFrontendConfig(spotifyAuthClientId, spotifyAuthRedirectUri);
     }
 }

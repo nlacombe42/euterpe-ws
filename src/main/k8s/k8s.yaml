@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: euterpe-ws
-          image: gcr.io/nlacombe-net-prod/euterpe-ws:3.0.0-20201003180156
+          image: gcr.io/nlacombe-net-prod/euterpe-ws:3.0.1-20201003182414
           env:
             - name: PORT
               value: "80"
