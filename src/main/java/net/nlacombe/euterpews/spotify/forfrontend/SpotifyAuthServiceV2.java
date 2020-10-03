@@ -1,4 +1,4 @@
-package net.nlacombe.euterpews.spotify;
+package net.nlacombe.euterpews.spotify.forfrontend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wrapper.spotify.Base64;
@@ -11,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 @Service
 public class SpotifyAuthServiceV2 {
@@ -29,7 +30,7 @@ public class SpotifyAuthServiceV2 {
         this.spotifyAuthClientSecret = spotifyAuthClientSecret;
     }
 
-    public String getSpotifyAccessToken(String code) {
+    public SpotifyAuthTokenV2 getSpotifyAuthToken(String code) {
         try {
             var requestBody = "code=" + code;
             requestBody += "&redirect_uri=" + getSpotifyAuthRedirectUri();
@@ -47,7 +48,9 @@ public class SpotifyAuthServiceV2 {
             var responseJson = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString()).body();
             var spotifyOauthAccessTokenResponse = jsonConverter.readValue(responseJson, SpotifyOauthAccessTokenResponse.class);
 
-            return spotifyOauthAccessTokenResponse.getAccess_token();
+            var tokenExpiry = Instant.now().plusSeconds(spotifyOauthAccessTokenResponse.getExpires_in() - 1);
+
+            return new SpotifyAuthTokenV2(spotifyOauthAccessTokenResponse.getAccess_token(), tokenExpiry);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Error calling spotify to get access token", e);
         }

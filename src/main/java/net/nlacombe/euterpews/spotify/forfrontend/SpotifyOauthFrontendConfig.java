@@ -1,4 +1,4 @@
-package net.nlacombe.euterpews.spotify;
+package net.nlacombe.euterpews.spotify.forfrontend;
 
 public class SpotifyOauthFrontendConfig {
     private final String spotifyAuthClientId;

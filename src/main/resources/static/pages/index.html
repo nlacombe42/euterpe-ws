@@ -9,17 +9,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
     <link rel="stylesheet" type="text/css" href="style.css">
 
-    <script src="https://apis.google.com/js/platform.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.19/lodash.min.js"></script>
-    <script src="main.js"></script>
+    <script type="module" src="main.module.js"></script>
 </head>
 <body>
 <div class="wrapper">
     <main>
         <h1>Euterpe-ws</h1>
 
-        <p class=".message"></p>
+        <p class="message"></p>
+
+        <h4>Playlists</h4>
+        <section>
+            <input type="text" id="playlistSearchInput" placeholder="search playlists" /><br />
+            <p id="numberOfPlaylists"></p>
+            <ul class="playlists"></ul>
+        </section>
     </main>
 </div>
 </body>
