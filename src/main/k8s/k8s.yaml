@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: euterpe-ws
+  labels:
+    app: euterpe-ws
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: euterpe-ws
+  template:
+    metadata:
+      labels:
+        app: euterpe-ws
+    spec:
+      containers:
+        - name: euterpe-ws
+          image: gcr.io/nlacombe-net-prod/euterpe-ws:3.0.0-20201003180156
+          env:
+            - name: PORT
+              value: "80"
+          ports:
+            - containerPort: 80
+          volumeMounts:
+              -   name: euterpe-ws-config
+                  mountPath: /app/config
+                  readOnly: true
+          resources:
+              requests:
+                  cpu: 50m
+                  memory: 300Mi
+              limits:
+                  cpu: 200m
+                  memory: 500Mi
+      volumes:
+        - name: euterpe-ws-config
+          secret:
+            secretName: euterpe-ws-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: euterpe-ws
+spec:
+  selector:
+    app: euterpe-ws
+  ports:
+    - port: 80
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: euterpe-ws
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: https
+spec:
+  rules:
+    - host: euterpe-api.nlacombe.net
+      http:
+        paths:
+          - backend:
+              serviceName: euterpe-ws
+              servicePort: 80
