@@ -6,6 +6,7 @@ let localStorageKeys = {
 };
 
 let playlists;
+let selectedTrack;
 
 function init() {
     let storedSpotifyAccessToken = getStoredSpotifyAccessToken();
@@ -13,8 +14,7 @@ function init() {
     let oneTimeSecretIdUrlParamValue = getUrlParameter('oneTimeSecretId');
 
     if (storedSpotifyTokenExpiry && new Date(storedSpotifyTokenExpiry) <= new Date()) {
-        localStorage.removeItem(localStorageKeys.spotifyAccessToken);
-        localStorage.removeItem(localStorageKeys.spotifyTokenExpiry);
+        clearStoredSpotifyAuthInfo();
         storedSpotifyAccessToken = undefined;
         storedSpotifyTokenExpiry = undefined;
     }
@@ -22,22 +22,39 @@ function init() {
     if (storedSpotifyAccessToken && new Date(storedSpotifyTokenExpiry) > new Date()) {
         loadPage();
     } else if (oneTimeSecretIdUrlParamValue) {
+        $('.loginSection').css({display: 'none'});
+
+        showMessage('Authenticating...');
+
         getAndStoreSpotifyAuthTokenFromOneTimeSecret(oneTimeSecretIdUrlParamValue).then(() => {
-            location.href = `${location.origin}/pages/index.html`;
+            redirectToMainPage();
         });
     } else {
-        showMessage('Redirecting to spotify for authentication...');
-        redirectToSpotifyOauthPage();
+        $('#loginButton').on('click', () => {
+            showMessage('Redirecting to spotify for authentication...');
+            redirectToSpotifyOauthPage();
+        });
     }
 }
 
+
 function loadPage() {
+    $('.loginSection').css({display: 'none'});
+
+    setupLogoutSection();
+    setupPlaylistsSection();
+    setupSelectTrackSection();
+}
+
+function setupPlaylistsSection() {
+    $('.playlistSection').css({display: 'block'});
+
     showMessage('Loading playlists...');
 
     getAllCurrentUserPlaylists().then(allPlaylists => {
         playlists = allPlaylists;
 
-        showPlaylists(playlists);
+        showPlaylists(playlists, selectedTrack);
 
         $('#playlistSearchInput').on('input', () => updateShownPlaylistsBasedOnSearch());
         $('#numberOfPlaylists').text('Total number of playlists: ' + playlists.length);
@@ -46,17 +63,65 @@ function loadPage() {
     }).catch(() => showMessage('Failed to load spotify user info.'));
 }
 
+function setupSelectTrackSection() {
+    $('.selectTrackSection').css({display: 'block'});
+    $('#selectTrackForm').submit(() => {
+        let trackText = $('#trackToSelect').val().trim();
+        let trackId = normalizeTrackId(trackText);
+
+        getTrackFromId(trackId).then(track => {
+            selectedTrack = track;
+            showSelectedTrackInfo(selectedTrack);
+            showPlaylists(playlists, selectedTrack);
+        }).catch(() => showMessage('Failed to load track info.'));
+
+        return false;
+    });
+}
+
+function setupLogoutSection() {
+    $('.logoutSection').css({display: 'block'});
+
+    $('#logoutButton').on('click', () => {
+        showMessage('Logging out...');
+        clearStoredSpotifyAuthInfo();
+        redirectToMainPage();
+    });
+}
+
+function showSelectedTrackInfo(track) {
+    $('#selectedTrackName').text(track.name);
+    $('#selectedTrackAlbumName').text(track.album.name);
+    $('#selectedTrackArtistsNames').text(track.artists.map(artist => artist.name).join(', '));
+    $('.selectedTrackInfo').css({display: 'block'});
+}
+
+function normalizeTrackId(trackText) {
+    let indexOfSlash = trackText.lastIndexOf('/');
+    let indexOfColon = trackText.lastIndexOf(':');
+
+    if (indexOfSlash >= 0) {
+        return trackText.substr(indexOfSlash + 1);
+    }
+
+    if (indexOfColon >= 0) {
+        return trackText.substr(indexOfColon + 1);
+    }
+
+    return trackText;
+}
+
 function updateShownPlaylistsBasedOnSearch() {
     let searchTermsText = $('#playlistSearchInput').val().trim().toLowerCase();
 
     if (searchTermsText === '') {
-        showPlaylists(playlists);
+        showPlaylists(playlists, selectedTrack);
 
         return;
     }
 
     let playlistsToShow = playlists.filter(playlist => searchMatches(playlist.name, searchTermsText));
-    showPlaylists(playlistsToShow);
+    showPlaylists(playlistsToShow, selectedTrack);
 }
 
 function searchMatches(text, searchQuery) {
@@ -66,16 +131,34 @@ function searchMatches(text, searchQuery) {
     return searchTerms.every(searchTerm => lowerCaseText.includes(searchTerm));
 }
 
-function showPlaylists(playlists) {
+function showPlaylists(playlists, selectedTrack) {
     let playlistsHtml = playlists
         .sort((left, right) => left.name.toLowerCase() < right.name.toLowerCase() ? -1 : 1)
-        .map(playlist => toPlaylistItemHtml(playlist));
+        .map(playlist => toPlaylistItemHtml(playlist, selectedTrack));
 
     $('.playlists').html(playlistsHtml);
 }
 
-function toPlaylistItemHtml(playlist) {
-    return '<li><a href="' + playlist.external_urls.spotify + '">' + playlist.name + '</a></li>';
+function toPlaylistItemHtml(playlist, selectedTrack) {
+    let listItemHtml = ``;
+    listItemHtml += `<li>`;
+
+    if (selectedTrack) {
+        let uuid = uuidV4();
+
+        $('body').on('click', `#${uuid}`, () => {
+            addTrackToPlaylist(playlist.id, selectedTrack.id)
+                .then(() => showMessage("Selected track added to playlist successfully"))
+                .catch(() => showMessage("Error adding selected track to playlist"));
+        });
+
+        listItemHtml += `<button type="button" id="${uuid}">Add selected track to this playlist</button> `;
+    }
+
+    listItemHtml += `<a href="${playlist.external_urls.spotify}">${playlist.name}</a>`;
+    listItemHtml += `</li>`;
+
+    return listItemHtml;
 }
 
 function getAllCurrentUserPlaylists(offset) {
@@ -95,6 +178,31 @@ function getAllCurrentUserPlaylists(offset) {
                     .catch(error => reject(error));
             })
             .catch(error => reject(error));
+    });
+}
+
+function getTrackFromId(trackId) {
+    return $.ajax({
+        url: `https://api.spotify.com/v1/tracks/${trackId}`,
+        headers: {
+            Authorization: `Bearer ${getStoredSpotifyAccessToken()}`
+        },
+    });
+}
+
+function addTrackToPlaylist(playlistId, trackId) {
+    let requestBody = JSON.stringify({
+        uris: [`spotify:track:${trackId}`]
+    });
+
+    return $.ajax({
+        method: 'post',
+        url: `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        data: requestBody,
+        contentType: 'application/json',
+        headers: {
+            Authorization: `Bearer ${getStoredSpotifyAccessToken()}`
+        },
     });
 }
 
@@ -137,17 +245,27 @@ function getStoredSpotifyTokenExpiry() {
     return JSON.parse(localStorage.getItem(localStorageKeys.spotifyTokenExpiry));
 }
 
+function clearStoredSpotifyAuthInfo() {
+    localStorage.removeItem(localStorageKeys.spotifyAccessToken);
+    localStorage.removeItem(localStorageKeys.spotifyTokenExpiry);
+}
+
 function redirectToSpotifyOauthPage() {
     return getSpotifyAuthConfig().done(spotifyOauthConfig => {
         let urlParameters = $.param({
             response_type: 'code',
             client_id: spotifyOauthConfig.spotifyAuthClientId,
-            scope: 'user-library-read',
-            redirect_uri: spotifyOauthConfig.spotifyAuthRedirectUri
+            scope: 'user-library-read playlist-modify-public',
+            redirect_uri: spotifyOauthConfig.spotifyAuthRedirectUri,
+            show_dialog: true
         });
 
         location.href = `https://accounts.spotify.com/authorize?${urlParameters}`;
     }).fail(() => showMessage("Failed to get spotify oauth frontend config"));
+}
+
+function redirectToMainPage() {
+    location.href = `${location.origin}/pages/index.html`;
 }
 
 function showMessage(message, objectToLog) {
@@ -158,6 +276,12 @@ function showMessage(message, objectToLog) {
     }
 
     $('.message').text(text);
+}
+
+function uuidV4() {
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
 }
 
 function getUrlParameter(sParam) {

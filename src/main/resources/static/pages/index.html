@@ -15,11 +15,41 @@
 <div class="wrapper">
     <main>
         <h1>Euterpe-ws</h1>
+        <p>
+            Application to manage spotify music.<br />
+            Current features:
+            <ul>
+                <li>lists your library playlists</li>
+                <li>search your library playlists</li>
+                <li>add a track to your library playlists (by selecting it first)</li>
+            </ul>
+        </p>
 
         <p class="message"></p>
 
-        <h4>Playlists</h4>
-        <section>
+        <section class="loginSection">
+            <button type="button" id="loginButton">Login with Spotify</button>
+        </section>
+        <section class="logoutSection" style="display: none">
+            <button type="button" id="logoutButton">Logout</button>
+        </section>
+
+        <section class="selectTrackSection" style="display: none">
+            <h4>Select track</h4>
+            <form id="selectTrackForm" action="#">
+                <input type="text" id="trackToSelect" placeholder="track url/uri/id" />
+                <input type="submit" value="Select track" />
+            </form>
+            <br />
+            <section class="selectedTrackInfo" style="display: none">
+                <strong>Track name</strong>: <span id="selectedTrackName"></span><br />
+                <strong>Album</strong>: <span id="selectedTrackAlbumName"></span><br />
+                <strong>Artist(s)</strong>: <span id="selectedTrackArtistsNames"></span><br />
+            </section>
+        </section>
+
+        <section class="playlistSection" style="display: none">
+            <h4>Playlists</h4>
             <input type="text" id="playlistSearchInput" placeholder="search playlists" /><br />
             <p id="numberOfPlaylists"></p>
             <ul class="playlists"></ul>
